@@ -1,0 +1,43 @@
+/* src/include/config.h.in.  Generated from configure.ac by autoheader.  */
+
+/* Do we have libglib */
+#undef HAVE_GLIB
+
+/* Do we have libgtk */
+#undef HAVE_GTK
+
+/* Define if you have the iconv() function and it works. */
+#undef HAVE_ICONV
+
+/* Do we have lib3270 */
+#undef HAVE_LIB3270
+
+/* Do we have libv3270 */
+#undef HAVE_V3270
+
+/* Define as const if the declaration of iconv() needs const. */
+#undef ICONV_CONST
+
+/* Name of package */
+#undef PACKAGE
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
+
+/* Version number of package */
+#undef VERSION
