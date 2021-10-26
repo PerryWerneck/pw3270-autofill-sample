@@ -26,10 +26,20 @@
 
 	g_message("Program message changed to %u",message);
 
+	if(message) {
+		// Terminal is read-only; cant change it. Ignore signal.
+		return;
+	}
+
+	// Check terminal contents for the droids we're looking for.
+
+
  }
 
  /// @brief A new terminal was created, watch it
  LIB3270_EXPORT int pw3270_plugin_setup_terminal(GtkWidget *terminal) {
+
+	g_message("Monitoring terminal %p", terminal);
 
 	// Trata mudança de nome na LU
 	g_signal_connect(terminal, "message-changed", G_CALLBACK(message_changed), terminal);
