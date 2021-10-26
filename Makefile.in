@@ -1,0 +1,238 @@
+#
+# "Software pw3270, desenvolvido com base nos códigos fontes do WC3270  e X3270
+# (Paul Mattes Paul.Mattes@usa.net), de emulação de terminal 3270 para acesso a
+# aplicativos mainframe. Registro no INPI sob o nome G3270.
+#
+# Copyright (C) <2008> <Banco do Brasil S.A.>
+#
+# Este programa é software livre. Você pode redistribuí-lo e/ou modificá-lo sob
+# os termos da GPL v.2 - Licença Pública Geral  GNU,  conforme  publicado  pela
+# Free Software Foundation.
+#
+# Este programa é distribuído na expectativa de  ser  útil,  mas  SEM  QUALQUER
+# GARANTIA; sem mesmo a garantia implícita de COMERCIALIZAÇÃO ou  de  ADEQUAÇÃO
+# A QUALQUER PROPÓSITO EM PARTICULAR. Consulte a Licença Pública Geral GNU para
+# obter mais detalhes.
+#
+# Você deve ter recebido uma cópia da Licença Pública Geral GNU junto com este
+# programa;  se  não, escreva para a Free Software Foundation, Inc., 59 Temple
+# Place, Suite 330, Boston, MA, 02111-1307, USA
+#
+# Contatos:
+#
+# perry.werneck@gmail.com	(Alexandre Perry de Souza Werneck)
+# erico.mendonca@gmail.com	(Erico Mascarenhas de Mendonça)
+#
+
+#---[ Library configuration ]------------------------------------------------------------
+
+MODULE_NAME=autofill
+SERVICE_NAME=ipc3270d
+PACKAGE_NAME=@PACKAGE_NAME@
+PRODUCT_NAME=@PRODUCT_NAME@
+
+SOURCES= \
+	$(wildcard src/plugin/*.c) \
+	$(wildcard src/plugin/@OSNAME@/*.rc)
+
+#---[ Tools ]----------------------------------------------------------------------------
+
+CC=@CC@
+LD=@CC@
+LN_S=@LN_S@
+MKDIR=@MKDIR_P@
+INSTALL=@INSTALL@
+INSTALL_DATA=@INSTALL_DATA@
+INSTALL_PROGRAM=@INSTALL_PROGRAM@
+XGETTEXT=@XGETTEXT@
+MSGCAT=@MSGCAT@
+WINDRES=@WINDRES@
+AR=@AR@
+VALGRIND=@VALGRIND@
+STRIP=@STRIP@
+
+#---[ Paths ]----------------------------------------------------------------------------
+
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+bindir=@bindir@
+sbindir=@sbindir@
+libdir=@libdir@
+includedir=@includedir@
+datarootdir=@datarootdir@
+localedir=@localedir@
+docdir=@docdir@
+sysconfdir=@sysconfdir@
+
+BASEDIR=@BASEDIR@
+
+OBJDIR=$(BASEDIR)/.obj
+OBJDBG=$(OBJDIR)/Debug
+OBJRLS=$(OBJDIR)/Release
+
+BINDIR=$(BASEDIR)/.bin
+BINDBG=$(BINDIR)/Debug
+BINRLS=$(BINDIR)/Release
+
+#---[ Rules ]----------------------------------------------------------------------------
+
+LDFLAGS= \
+	@LDFLAGS@
+
+CFLAGS= \
+	@CFLAGS@ \
+	-DBUILD_DATE=`date +%Y%m%d` \
+	-DLOCALEDIR=$(localedir) \
+	@V3270_CFLAGS@ \
+	@GTK_CFLAGS@ \
+	@GLIB_CFLAGS@
+
+LIBS= \
+	@LIBS@ \
+	@V3270_LIBS@ \
+	@GTK_LIBS@ \
+	@GLIB_LIBS@
+
+#---[ Debug Rules ]----------------------------------------------------------------------
+
+$(OBJDBG)/%.o: \
+	%.c
+	
+	@echo $< ...
+	@$(MKDIR) $(@D)
+
+	@$(CC) \
+		$(CFLAGS) \
+		-DDEBUG=1 \
+		-MM -MT $@ -MF $(patsubst %.o,%.d,$@) $<
+
+	@$(CC) \
+		$(CFLAGS) \
+		-Wall -Wextra -fstack-check \
+		-DDEBUG=1 \
+		-DPLUGIN_PATH=$(BINDBG) \
+		-o $@ -c $<
+
+$(OBJDBG)/%.o: \
+	%.rc
+
+	@echo $< ...
+	@$(MKDIR) $(@D)
+	@$(WINDRES) $< -O coff -o $@
+
+#---[ Release Rules ]--------------------------------------------------------------------
+
+$(OBJRLS)/%.o: \
+	%.c
+	@echo $< ...
+	@$(MKDIR) $(@D)
+
+	@$(CC) \
+		$(CFLAGS) \
+		-DNDEBUG=1 \
+		-MM -MT $@ -MF $(patsubst %.o,%.d,$@) $<
+
+	@$(CC) \
+		$(CFLAGS) \
+		-DNDEBUG=1 \
+		-o $@ -c $<
+
+$(OBJRLS)/%.o: \
+	%.rc
+
+	@echo $< ...
+	@$(MKDIR) $(@D)
+	@$(WINDRES) $< -O coff -o $@
+
+#---[ Release Targets ]------------------------------------------------------------------
+
+all: \
+	$(BINRLS)/$(MODULE_NAME)@DLLEXT@
+
+Release: \
+	$(BINRLS)/$(MODULE_NAME)@DLLEXT@
+
+$(BINRLS)/$(MODULE_NAME)@DLLEXT@: \
+	$(foreach SRC, $(basename $(PLUGIN_SOURCES)), $(OBJRLS)/$(SRC).o)
+
+	@$(MKDIR) $(@D)
+	@echo $< ...
+	@$(LD) \
+		-shared -Wl,-soname,$(@F) \
+		-o $@ \
+		$(LDFLAGS) \
+		$(foreach SRC, $(basename $(PLUGIN_SOURCES)), $(OBJRLS)/$(SRC).o) \
+		$(LIBS)
+
+#---[ Install Targets ]------------------------------------------------------------------
+
+install: \
+	install-plugin-@OSNAME@
+
+install-plugin-linux: \
+	$(BINRLS)/$(MODULE_NAME)@DLLEXT@
+
+	@$(MKDIR) $(DESTDIR)$(libdir)/$(PRODUCT_NAME)-plugins
+
+	@$(INSTALL_PROGRAM) \
+		$(BINRLS)/$(MODULE_NAME)@DLLEXT@ \
+		$(DESTDIR)$(libdir)/$(PRODUCT_NAME)-plugins
+
+install-plugin-windows: \
+	$(BINRLS)/$(MODULE_NAME)@DLLEXT@
+
+	@$(MKDIR) $(DESTDIR)$(libdir)/$(PRODUCT_NAME)-plugins
+
+	@$(INSTALL_PROGRAM) \
+		$(BINRLS)/$(MODULE_NAME)@DLLEXT@ \
+		$(DESTDIR)$(libdir)/$(PRODUCT_NAME)-plugins/$(MODULE_NAME)@DLLEXT@
+
+	@$(STRIP) \
+		--discard-all \
+		$(DESTDIR)$(libdir)/$(PRODUCT_NAME)-plugins/$(MODULE_NAME)@DLLEXT@
+
+#---[ Debug Targets ]--------------------------------------------------------------------
+
+Debug: \
+	$(BINDBG)/$(MODULE_NAME)@DLLEXT@
+
+$(BINDBG)/$(MODULE_NAME)@DLLEXT@: \
+	$(foreach SRC, $(basename $(SOURCES)), $(OBJDBG)/$(SRC).o)
+
+	@$(MKDIR) $(@D)
+	@echo $< ...
+	@$(LD) \
+		-shared -Wl,-soname,$(@F) \
+		-o $@ \
+		$(LDFLAGS) \
+		$(foreach SRC, $(basename $(SOURCES)), $(OBJDBG)/$(SRC).o) \
+		$(LIBS)
+
+
+#---[ Clean Targets ]--------------------------------------------------------------------
+
+clean: \
+	cleanDebug \
+	cleanRelease
+
+cleanDebug:
+
+	@rm -fr $(OBJDBG)
+	@rm -fr $(BINDBG)
+
+cleanRelease:
+
+	@rm -fr $(OBJRLS)
+	@rm -fr $(BINRLS)
+
+clean: \
+	cleanDebug \
+	cleanRelease
+
+-include $(foreach SRC, $(basename $(PLUGIN_SOURCES)), $(OBJDBG)/$(SRC).d)
+-include $(foreach SRC, $(basename $(PLUGIN_SOURCES)), $(OBJRLS)/$(SRC).d)
+
+-include $(foreach SRC, $(basename $(SERVICE_SOURCES)), $(OBJDBG)/$(SRC).d)
+-include $(foreach SRC, $(basename $(SERVICE_SOURCES)), $(OBJRLS)/$(SRC).d)
+
+
