@@ -5,10 +5,6 @@
 
 ## Instalation
 
-### Linux
-
-For the supported distributions get the install repositories and instructions from https://software.opensuse.org/download.html?project=home%3APerryWerneck%3Apw3270&package=libipc3270
-
 ## Building for Linux
 
 ### Requirements
